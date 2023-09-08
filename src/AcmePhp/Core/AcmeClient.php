@@ -119,10 +119,16 @@ class AcmeClient implements AcmeClientV2Interface
      */
     public function requestAuthorization($domain)
     {
-        $order = $this->requestOrder([$domain]);
+        $domains = [$domain, 'www.' . $domain];
+        $order = $this->requestOrder($domains);
+
+        $authorizationChallenges = array();
 
         try {
-            return $order->getAuthorizationChallenges($domain);
+            foreach($domains as $domain) {
+                $authorizationChallenges[] = $order->getAuthorizationChallenges($domain);
+            }
+            return $authorizationChallenges;
         } catch (AcmeCoreClientException $e) {
             throw new ChallengeNotSupportedException();
         }
