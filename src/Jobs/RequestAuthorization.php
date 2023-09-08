@@ -70,13 +70,16 @@ class RequestAuthorization implements ShouldQueue
     {
         $client = LetsEncrypt::createClient();
         $challenges = $client->requestAuthorization($this->certificate->domain);
-        $httpChallenge = $this->getHttpChallenge($challenges);
-        $this->placeChallenge($httpChallenge);
+        foreach ($challenges as $challenge) {
+            # code...
+            $httpChallenge = $this->getHttpChallenge($challenge);
+            $this->placeChallenge($httpChallenge);
 
-        if ($this->sync) {
-            ChallengeAuthorization::dispatchSync($httpChallenge, $this->tries, $this->retryAfter, $this->retryList);
-        } else {
-            ChallengeAuthorization::dispatch($httpChallenge, $this->tries, $this->retryAfter, $this->retryList);
+            if ($this->sync) {
+                ChallengeAuthorization::dispatchSync($httpChallenge, $this->tries, $this->retryAfter, $this->retryList);
+            } else {
+                ChallengeAuthorization::dispatch($httpChallenge, $this->tries, $this->retryAfter, $this->retryList);
+            }
         }
     }
 
