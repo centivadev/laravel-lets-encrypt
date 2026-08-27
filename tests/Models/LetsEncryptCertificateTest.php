@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\Queue;
 
 class LetsEncryptCertificateTest extends TestCase
 {
-    /** @test */
     public function test_correct_builder_instance()
     {
         $builder = LetsEncryptCertificate::query();
@@ -22,7 +21,6 @@ class LetsEncryptCertificateTest extends TestCase
         $this->assertInstanceOf(LetsEncryptCertificateBuilder::class, $builder);
     }
 
-    /** @test */
     public function test_correct_collection_instance()
     {
         $collection = LetsEncryptCertificate::all();
@@ -30,7 +28,6 @@ class LetsEncryptCertificateTest extends TestCase
         $this->assertInstanceOf(LetsEncryptCertificateCollection::class, $collection);
     }
 
-    /** @test */
     public function test_has_expired_attribute()
     {
         $certificate = LetsEncryptCertificate::create([
@@ -56,7 +53,6 @@ class LetsEncryptCertificateTest extends TestCase
         $this->assertTrue($certificate->has_expired, 'Certificate has been issued 4 months ago so should be marked as expired.');
     }
 
-    /** @test */
     public function test_renew()
     {
         $certificate = LetsEncryptCertificate::create([
@@ -73,7 +69,6 @@ class LetsEncryptCertificateTest extends TestCase
         ]);
     }
 
-    /** @test */
     public function test_renew_now()
     {
         $certificate = LetsEncryptCertificate::create([

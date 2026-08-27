@@ -11,10 +11,10 @@ use Daanra\LaravelLetsEncrypt\PendingCertificate;
 use Daanra\LaravelLetsEncrypt\Tests\TestCase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Queue;
+use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 
 class LetsEncryptTest extends TestCase
 {
-    /** @test */
     public function test_can_create_now()
     {
         Bus::fake();
@@ -25,7 +25,6 @@ class LetsEncryptTest extends TestCase
         Bus::assertDispatched(RegisterAccount::class);
     }
 
-    /** @test */
     public function test_can_create()
     {
         Queue::fake();
@@ -46,9 +45,7 @@ class LetsEncryptTest extends TestCase
         LetsEncrypt::validateDomain('https://mydomain.com');
     }
 
-    /**
-     * @doesNotPerformAssertions
-     */
+    #[DoesNotPerformAssertions]
     public function test_is_valid_domain()
     {
         LetsEncrypt::validateDomain('test-some-domain.company');
@@ -77,7 +74,6 @@ class LetsEncryptTest extends TestCase
         ]);
     }
 
-    /** @test */
     public function test_can_create_now_with_san()
     {
         Bus::fake();

@@ -7,7 +7,6 @@ use Daanra\LaravelLetsEncrypt\Tests\TestCase;
 
 class LetsEncryptCertificateBuilderTest extends TestCase
 {
-    /** @test */
     public function test_expired()
     {
         $expired = LetsEncryptCertificate::create([

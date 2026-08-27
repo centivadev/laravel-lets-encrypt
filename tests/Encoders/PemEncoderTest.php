@@ -7,7 +7,6 @@ use Daanra\LaravelLetsEncrypt\Tests\TestCase;
 
 class PemEncoderTest extends TestCase
 {
-    /** @test */
     public function test_encoder()
     {
         $this->assertEquals("test    test\n", PemEncoder::encode('  test    test  '));
