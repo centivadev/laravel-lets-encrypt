@@ -14,6 +14,7 @@ use Illuminate\Contracts\Bus\Dispatcher;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -64,6 +65,11 @@ class RequestAuthorization implements ShouldQueue
         if ($success === false) {
             throw new FailedToMoveChallengeException($path);
         }
+    }
+
+    public function middleware(): array
+    {
+        return [(new WithoutOverlapping('ssl-cert-gen:'.$this->certificate->domain))->shared()->dontRelease()];
     }
 
     public function handle()

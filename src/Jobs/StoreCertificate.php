@@ -15,6 +15,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
@@ -47,6 +48,15 @@ class StoreCertificate implements ShouldQueue
         $this->tries = $tries;
         $this->retryAfter = $retryAfter;
         $this->retryList = $retryList;
+    }
+
+    /**
+     * This is the job that actually writes the files to disk: the most sensitive point in
+     * the whole chain. See RequestAuthorization::middleware() for the same lock.
+     */
+    public function middleware(): array
+    {
+        return [(new WithoutOverlapping('ssl-cert-gen:'.$this->dbCertificate->domain))->shared()->dontRelease()];
     }
 
     /**
