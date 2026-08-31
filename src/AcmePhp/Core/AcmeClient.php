@@ -166,6 +166,10 @@ class AcmeClient implements AcmeClientV2Interface
             $authorizationsResponse = $client->request('POST', $authorizationEndpoint, $client->signKidPayload($authorizationEndpoint, $this->getResourceAccount(), null));
             $domain = (empty($authorizationsResponse['wildcard']) ? '' : '*.').$authorizationsResponse['identifier']['value'];
             foreach ($authorizationsResponse['challenges'] as $challenge) {
+                // dns-persist-01 has no "token" field; only http-01 is ever used downstream.
+                if (empty($challenge['token']) || ! is_string($challenge['token'])) {
+                    continue;
+                }
                 $authorizationsChallenges[$domain][] = $this->createAuthorizationChallenge($authorizationsResponse['identifier']['value'], $challenge);
             }
         }

@@ -77,9 +77,9 @@ class StoreCertificate implements ShouldQueue
         $factory = PathGeneratorFactory::create();
 
         $this->storeInPossiblyNonExistingDirectory($factory, 'cert', $certPem);
-        $this->storeInPossiblyNonExistingDirectory($factory, 'chain', $certPem);
+        $this->storeInPossiblyNonExistingDirectory($factory, 'chain', $chainPem);
         $this->storeInPossiblyNonExistingDirectory($factory, 'fullchain', $fullChainPem);
-        $this->storeInPossiblyNonExistingDirectory($factory, 'privkey', $privkeyPem);
+        $this->storeInPossiblyNonExistingDirectory($factory, 'privkey', $privkeyPem, 'private');
         $this->dbCertificate->last_renewed_at = now();
         $this->dbCertificate->created = true;
         $this->dbCertificate->save();
@@ -92,7 +92,7 @@ class StoreCertificate implements ShouldQueue
      * @param string $contents
      * @throws FailedToStoreCertificate
      */
-    protected function storeInPossiblyNonExistingDirectory(PathGenerator $generator, string $filename, string $contents): void
+    protected function storeInPossiblyNonExistingDirectory(PathGenerator $generator, string $filename, string $contents, ?string $visibility = null): void
     {
         $path = $generator->getCertificatePath($this->dbCertificate->domain, $filename . '.pem');
         $directory = File::dirname($path);
@@ -103,7 +103,7 @@ class StoreCertificate implements ShouldQueue
 
         $this->dbCertificate[$filename . '_path'] = $path;
 
-        if ($fs->put($path, $contents) === false) {
+        if ($fs->put($path, $contents, $visibility ?? []) === false) {
             throw new FailedToStoreCertificate($path);
         }
     }
@@ -115,6 +115,6 @@ class StoreCertificate implements ShouldQueue
      */
     public function failed(\Throwable $exception)
     {
-        event(new StoreCertificateFailed($exception));
+        event(new StoreCertificateFailed($exception, $this->dbCertificate));
     }
 }

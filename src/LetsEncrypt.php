@@ -190,6 +190,10 @@ class LetsEncrypt
             file_put_contents($publicKeyPath, $keyPair->getPublicKey()->getPEM());
             file_put_contents($privateKeyPath, $keyPair->getPrivateKey()->getPEM());
 
+            // @: best-effort hardening, must never block key generation.
+            @chmod($publicKeyPath, 0644);
+            @chmod($privateKeyPath, 0600);
+
             return $keyPair;
         }
 
