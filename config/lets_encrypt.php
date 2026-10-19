@@ -26,4 +26,9 @@ return [
 
     // The disk to store store challenges on. Use null for the default disk.
     'challenge_disk' => null,
+
+    // Seconds after which the per-domain job lock expires. Must exceed the longest job of the
+    // chain, so that a running job never loses its lock, and stay short enough for a domain to
+    // recover from a worker killed while holding it.
+    'job_lock_expires_after' => env('LETS_ENCRYPT_JOB_LOCK_EXPIRES_AFTER', 600),
 ];

@@ -86,6 +86,7 @@ Where you can specify values for all jobs:
 - retryList (The list of seconds to wait before retrying the job)
 - chain (Chain some jobs after the certificate has successfully been obtained)
 - delay (Set the desired delay for the job)
+- attemptId (Identify this issuance in every event the chain dispatches, see below)
 
 You could also achieve the same by using an artisan command:
 ```bash
@@ -122,6 +123,22 @@ LetsEncrypt::certificate('mydomain.com')
         ->create(); 
 ```
 
+## Success event
+
+Once the four certificate files are stored and the model is saved,
+`Daanra\LaravelLetsEncrypt\Events\CertificateStored` is dispatched. It carries the dates, the serial
+number and the authority key identifier read from the issued certificate itself, so callers never
+have to assume a lifetime:
+
+```php
+$event->getCertificate();            // LetsEncryptCertificate
+$event->getNotBefore();              // DateTimeImmutable
+$event->getNotAfter();               // DateTimeImmutable
+$event->getSerialNumber();           // uppercase hexadecimal
+$event->getAuthorityKeyIdentifier(); // uppercase hexadecimal, or null
+$event->getAttemptId();              // the value given to setAttemptId(), or null
+```
+
 ## Failure events
 
 If one of the jobs fails, one of the following events will be dispatched:
@@ -136,6 +153,23 @@ Daanra\LaravelLetsEncrypt\Events\RenewExpiringCertificatesFailed
 ```
 
 Every event implements the `Daanra\LaravelLetsEncrypt\Interfaces\LetsEncryptCertificateFailed` interface so you can listen for that as well.
+Besides `getException()`, the interface gives `getDomain()` and `getAttemptId()`, so a failure can
+be matched to the issuance attempt that caused it. Both are null when the failing job is not tied to
+a domain (`RenewExpiringCertificatesFailed`) or when no attempt identifier was given.
+
+A challenge that Let's Encrypt finds invalid is reported by `RequestAuthorizationFailed`, with the
+`ChallengeFailedException` as its exception: `RequestAuthorization` validates the challenges itself,
+and fails at once instead of being retried, since a retry would only count one more failed
+authorization against the Let's Encrypt rate limits. `ChallengeAuthorization` and `CleanUpChallenge`
+are no longer dispatched by the package.
+
+## Job lock
+
+`RequestAuthorization`, `RequestCertificate` and `StoreCertificate` share one lock per domain, so two
+chains never run for the same domain at once; a job that finds the lock taken is dropped. The lock
+expires after `job_lock_expires_after` seconds (600 by default, `LETS_ENCRYPT_JOB_LOCK_EXPIRES_AFTER`),
+so a worker killed while holding it cannot block its domain forever. Keep it above the longest job of
+the chain.
 
 ## Automatically renewing certificates
 

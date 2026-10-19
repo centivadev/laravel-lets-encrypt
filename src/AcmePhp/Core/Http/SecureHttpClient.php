@@ -196,7 +196,7 @@ class SecureHttpClient
      *
      * @return array the signed Pyaload
      */
-    public function signKidPayload($endpoint, $account, array $payload = null)
+    public function signKidPayload($endpoint, $account, ?array $payload = null)
     {
         return $this->signPayload(
             [
@@ -217,7 +217,7 @@ class SecureHttpClient
      *
      * @return array the signed Payload
      */
-    public function signJwkPayload($endpoint, array $payload = null)
+    public function signJwkPayload($endpoint, ?array $payload = null)
     {
         return $this->signPayload(
             [
@@ -235,7 +235,7 @@ class SecureHttpClient
      *
      * @return array
      */
-    private function signPayload(array $protected, array $payload = null)
+    private function signPayload(array $protected, ?array $payload = null)
     {
         if (! isset($protected['alg'])) {
             throw new \InvalidArgumentException('The property "alg" is required in the protected array');
@@ -298,7 +298,7 @@ class SecureHttpClient
      *
      * @return array|string Array of parsed JSON if $returnJson = true, string otherwise
      */
-    public function unsignedRequest($method, $endpoint, array $data = null, $returnJson = true)
+    public function unsignedRequest($method, $endpoint, ?array $data = null, $returnJson = true)
     {
         @trigger_error('The method unsignedRequest is deprecated since version 1.1 and will be removed in 2.0. use methods request instead.', E_USER_DEPRECATED);
 

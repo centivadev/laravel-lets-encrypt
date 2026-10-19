@@ -12,6 +12,10 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
+/**
+ * @deprecated No longer dispatched by the package: RequestAuthorization validates and removes its
+ *     challenges itself.
+ */
 class ChallengeAuthorization implements ShouldQueue
 {
     use Dispatchable, Queueable, InteractsWithQueue, SerializesModels, Retryable;
@@ -22,7 +26,7 @@ class ChallengeAuthorization implements ShouldQueue
     protected $challenge;
 
 
-    public function __construct(AuthorizationChallenge $httpChallenge, int $tries = null, int $retryAfter = null, array $retryList = [])
+    public function __construct(AuthorizationChallenge $httpChallenge, ?int $tries = null, ?int $retryAfter = null, array $retryList = [])
     {
         $this->challenge = $httpChallenge;
         $this->tries = $tries;
@@ -50,6 +54,6 @@ class ChallengeAuthorization implements ShouldQueue
      */
     public function failed(\Throwable $exception)
     {
-        event(new ChallengeAuthorizationFailed($exception));
+        event(new ChallengeAuthorizationFailed($exception, $this->challenge->getDomain()));
     }
 }

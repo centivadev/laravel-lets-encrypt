@@ -14,6 +14,10 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * @deprecated No longer dispatched by the package: RequestAuthorization validates and removes its
+ *     challenges itself.
+ */
 class CleanUpChallenge implements ShouldQueue
 {
     use Dispatchable, Queueable, InteractsWithQueue, SerializesModels, Retryable;
@@ -24,7 +28,7 @@ class CleanUpChallenge implements ShouldQueue
     /** @var AcmeClient */
     protected $client;
 
-    public function __construct(AuthorizationChallenge $httpChallenge, int $tries = null, int $retryAfter = null, array $retryList = [])
+    public function __construct(AuthorizationChallenge $httpChallenge, ?int $tries = null, ?int $retryAfter = null, array $retryList = [])
     {
         $this->challenge = $httpChallenge;
         $this->tries = $tries;
@@ -49,6 +53,6 @@ class CleanUpChallenge implements ShouldQueue
      */
     public function failed(\Throwable $exception)
     {
-        event(new CleanUpChallengeFailed($exception));
+        event(new CleanUpChallengeFailed($exception, $this->challenge->getDomain()));
     }
 }

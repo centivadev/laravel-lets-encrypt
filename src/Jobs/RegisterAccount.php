@@ -18,12 +18,20 @@ class RegisterAccount implements ShouldQueue
     /** @var string|null */
     protected $email;
 
-    public function __construct(string $email = null, int $tries = null, int $retryAfter = null, $retryList = [])
+    /** @var string|null */
+    protected $domain;
+
+    /** @var string|null */
+    protected $attemptId;
+
+    public function __construct(?string $email = null, ?int $tries = null, ?int $retryAfter = null, $retryList = [], ?string $domain = null, ?string $attemptId = null)
     {
         $this->email = $email;
         $this->tries = $tries;
         $this->retryAfter = $retryAfter;
         $this->retryList = $retryList;
+        $this->domain = $domain;
+        $this->attemptId = $attemptId;
     }
 
     public function handle()
@@ -39,6 +47,6 @@ class RegisterAccount implements ShouldQueue
      */
     public function failed(\Throwable $exception)
     {
-        event(new RegisterAccountFailed($exception));
+        event(new RegisterAccountFailed($exception, $this->domain, $this->attemptId));
     }
 }
