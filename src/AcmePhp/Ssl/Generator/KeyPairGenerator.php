@@ -30,7 +30,7 @@ class KeyPairGenerator
 {
     private $generator;
 
-    public function __construct(PrivateKeyGeneratorInterface $generator = null)
+    public function __construct(?PrivateKeyGeneratorInterface $generator = null)
     {
         $this->generator = $generator ?: new ChainPrivateKeyGenerator(
             [

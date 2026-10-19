@@ -48,6 +48,11 @@ class PendingCertificate
     protected $subjectAlternativeNames = [];
 
     /**
+     * @var string|null
+     */
+    protected $attemptId;
+
+    /**
      * PendingCertificate constructor.
      * @param string $domain
      */
@@ -67,29 +72,12 @@ class PendingCertificate
         LetsEncrypt::validateDomain($this->domain);
         LetsEncrypt::checkDomainDoesNotExist($this->domain);
 
-        $email = config('lets_encrypt.universal_email_address');
-
         $certificate = LetsEncryptCertificate::create([
             'domain' => $this->domain,
             'subject_alternative_names' => $this->subjectAlternativeNames,
         ]);
 
-        RegisterAccount::withChain(array_merge([
-                new RequestAuthorization(
-                    $certificate,
-                    $this->tries,
-                    $this->retryAfter,
-                    $this->retryList
-                ),
-                new RequestCertificate(
-                    $certificate,
-                    $this->tries,
-                    $this->retryAfter,
-                    $this->retryList
-                ),
-            ], $this->chain))
-                ->delay($this->delay)
-                ->dispatch($email, $this->tries, $this->retryAfter, $this->retryList);
+        $this->dispatchChain($certificate);
 
         return $certificate;
     }
@@ -101,28 +89,40 @@ class PendingCertificate
     public function renew(): LetsEncryptCertificate
     {
         $certificate = LetsEncryptCertificate::where('domain', $this->domain)->first();
-        $email = config('lets_encrypt.universal_email_address', null);
 
+        $this->dispatchChain($certificate);
+
+        return $certificate;
+    }
+
+    protected function dispatchChain(LetsEncryptCertificate $certificate): void
+    {
         RegisterAccount::withChain(array_merge([
             new RequestAuthorization(
                 $certificate,
                 $this->tries,
                 $this->retryAfter,
-                $this->retryList
+                $this->retryList,
+                $this->attemptId
             ),
             new RequestCertificate(
                 $certificate,
                 $this->tries,
                 $this->retryAfter,
-                $this->retryList
+                $this->retryList,
+                $this->attemptId
             ),
         ], $this->chain))
             ->delay($this->delay)
-            ->dispatch($email, $this->tries, $this->retryAfter, $this->retryList);
-
-        return $certificate;
+            ->dispatch(
+                config('lets_encrypt.universal_email_address'),
+                $this->tries,
+                $this->retryAfter,
+                $this->retryList,
+                $this->domain,
+                $this->attemptId
+            );
     }
-
 
     /**
      * @param array $domains
@@ -177,6 +177,19 @@ class PendingCertificate
     public function setRetryList(array $retryList): self
     {
         $this->retryList = $retryList;
+
+        return $this;
+    }
+
+    /**
+     * Identifies this issuance in every event the chain dispatches (CertificateStored and the
+     * failure events), so the caller can match an outcome to the attempt it started.
+     * @param string $attemptId
+     * @return static
+     */
+    public function setAttemptId(string $attemptId): self
+    {
+        $this->attemptId = $attemptId;
 
         return $this;
     }

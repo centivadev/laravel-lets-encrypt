@@ -16,7 +16,7 @@ class RenewExpiringCertificates implements ShouldQueue
 {
     use Dispatchable, Queueable, InteractsWithQueue, SerializesModels, Retryable;
 
-    public function __construct(int $tries = null, int $retryAfter = null, $retryList = [])
+    public function __construct(?int $tries = null, ?int $retryAfter = null, $retryList = [])
     {
         $this->tries = $tries;
         $this->retryAfter = $retryAfter;

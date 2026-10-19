@@ -116,7 +116,7 @@ interface AcmeClientInterface
     /**
      * @throws CertificateRevocationException
      */
-    public function revokeCertificate(Certificate $certificate, RevocationReason $revocationReason = null);
+    public function revokeCertificate(Certificate $certificate, ?RevocationReason $revocationReason = null);
 
     /**
      * Get the HTTP client.

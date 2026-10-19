@@ -2,6 +2,25 @@
 
 All notable changes to `daanra/laravel-lets-encrypt` will be documented in this file
 
+## V13.1.0
+
+- Add a `CertificateStored` event, dispatched once the certificate files are stored, with the
+  validity dates, serial number and authority key identifier read from the issued certificate, and
+  the attempt identifier. A certificate whose dates cannot be read is no longer stored
+- Add `PendingCertificate::setAttemptId()`, passed to every job of the chain and returned by every
+  event it dispatches
+- Add `getDomain()` and `getAttemptId()` to the `LetsEncryptCertificateFailed` interface and to every
+  failure event
+- `RequestAuthorization` now validates its challenges itself and removes the challenge files, valid or
+  not, before the chain moves on to `RequestCertificate`, which no longer races the validation and
+  relies on worker retries. A challenge found invalid fails the job at once, without a retry that
+  would count one more failed authorization against the Let's Encrypt rate limits.
+  `ChallengeAuthorization` and `CleanUpChallenge` are no longer dispatched and are deprecated
+- The per-domain lock shared by `RequestAuthorization`, `RequestCertificate` and `StoreCertificate`
+  now expires (`job_lock_expires_after`, 600 seconds by default), so a worker killed while holding
+  it no longer blocks its domain forever
+- Declare nullable parameters explicitly: implicitly nullable types are deprecated since PHP 8.4
+
 ## V13.0.1
 
 - Fix a fatal error thrown by `AcmeClient::requestOrder()` whenever the ACME server

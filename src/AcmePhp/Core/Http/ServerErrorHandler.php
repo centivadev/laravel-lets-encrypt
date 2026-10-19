@@ -98,7 +98,7 @@ class ServerErrorHandler
     public function createAcmeExceptionForResponse(
         RequestInterface $request,
         ResponseInterface $response,
-        \Exception $previous = null
+        ?\Exception $previous = null
     ) {
         $body = Utils::copyToString($response->getBody());
 
@@ -135,7 +135,7 @@ class ServerErrorHandler
     private function createDefaultExceptionForResponse(
         RequestInterface $request,
         ResponseInterface $response,
-        \Exception $previous = null
+        ?\Exception $previous = null
     ) {
         return new AcmeCoreServerException(
             $request,

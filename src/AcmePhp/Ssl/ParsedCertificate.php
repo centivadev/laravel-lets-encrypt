@@ -57,8 +57,8 @@ class ParsedCertificate
         $subject,
         $issuer = null,
         $selfSigned = true,
-        \DateTime $validFrom = null,
-        \DateTime $validTo = null,
+        ?\DateTime $validFrom = null,
+        ?\DateTime $validTo = null,
         $serialNumber = null,
         array $subjectAlternativeNames = []
     ) {

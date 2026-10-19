@@ -8,18 +8,18 @@ use Daanra\LaravelLetsEncrypt\AcmePhp\Ssl\Generator\KeyPairGenerator;
 use Daanra\LaravelLetsEncrypt\Events\RequestCertificateFailed;
 use Daanra\LaravelLetsEncrypt\Facades\LetsEncrypt;
 use Daanra\LaravelLetsEncrypt\Models\LetsEncryptCertificate;
+use Daanra\LaravelLetsEncrypt\Traits\LocksDomain;
 use Daanra\LaravelLetsEncrypt\Traits\Retryable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Bus\Dispatcher;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 
 class RequestCertificate implements ShouldQueue
 {
-    use Dispatchable, Queueable, InteractsWithQueue, SerializesModels, Retryable;
+    use Dispatchable, Queueable, InteractsWithQueue, SerializesModels, Retryable, LocksDomain;
 
     /** @var LetsEncryptCertificate */
     protected $certificate;
@@ -27,19 +27,23 @@ class RequestCertificate implements ShouldQueue
     /** @var bool */
     protected $sync;
 
+    /** @var string|null */
+    protected $attemptId;
 
-    public function __construct(LetsEncryptCertificate $certificate, int $tries = null, int $retryAfter = null, $retryList = [])
+
+    public function __construct(LetsEncryptCertificate $certificate, ?int $tries = null, ?int $retryAfter = null, $retryList = [], ?string $attemptId = null)
     {
         $this->sync = false;
         $this->certificate = $certificate;
         $this->tries = $tries;
         $this->retryAfter = $retryAfter;
         $this->retryList = $retryList;
+        $this->attemptId = $attemptId;
     }
 
     public function middleware(): array
     {
-        return [(new WithoutOverlapping('ssl-cert-gen:'.$this->certificate->domain))->shared()->dontRelease()];
+        return $this->domainLock($this->certificate->domain);
     }
 
     public function handle()
@@ -52,9 +56,9 @@ class RequestCertificate implements ShouldQueue
         $privateKey = $csr->getKeyPair()->getPrivateKey();
 
         if ($this->sync) {
-            StoreCertificate::dispatchSync($this->certificate, $certificate, $privateKey, $this->tries, $this->retryAfter, $this->retryList);
+            StoreCertificate::dispatchSync($this->certificate, $certificate, $privateKey, $this->tries, $this->retryAfter, $this->retryList, $this->attemptId);
         } else {
-            StoreCertificate::dispatch($this->certificate, $certificate, $privateKey, $this->tries, $this->retryAfter, $this->retryList);
+            StoreCertificate::dispatch($this->certificate, $certificate, $privateKey, $this->tries, $this->retryAfter, $this->retryList, $this->attemptId);
         }
     }
 
@@ -77,6 +81,6 @@ class RequestCertificate implements ShouldQueue
      */
     public function failed(\Throwable $exception)
     {
-        event(new RequestCertificateFailed($exception, $this->certificate));
+        event(new RequestCertificateFailed($exception, $this->certificate, $this->attemptId));
     }
 }

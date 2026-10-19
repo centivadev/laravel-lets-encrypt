@@ -3,13 +3,14 @@
 namespace Daanra\LaravelLetsEncrypt\Events;
 
 use Daanra\LaravelLetsEncrypt\Interfaces\LetsEncryptCertificateFailed;
+use Daanra\LaravelLetsEncrypt\Traits\IdentifiesAttempt;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
 class RenewExpiringCertificatesFailed implements LetsEncryptCertificateFailed
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, IdentifiesAttempt, InteractsWithSockets, SerializesModels;
 
     /** @var \Throwable */
     protected $exception;
